@@ -1,0 +1,69 @@
+
+// Breakouts Master - Developed by Forex Robot Easy Team
+// Website: forexroboteasy.com
+
+// Include necessary libraries
+#include <Trade\Trade.mqh>
+
+// Define constants
+#define STOP_LOSS 50       // Fixed stop loss in pips
+#define TAKE_PROFIT 100    // Take profit level in pips
+#define INITIAL_VOLUME 0.01 // Initial trading volume
+
+// Define global variables
+CTrade trade;   // Trade object
+double profit;  // Total earned profit
+
+// Initialize EA
+int OnInit()
+{
+    // Enable trading
+    trade.SetExpertMagicNumber(123456); // Set expert magic number for identification
+    trade.SetExpertStopLoss(STOP_LOSS); // Set fixed stop loss
+    trade.SetExpertTakeProfit(TAKE_PROFIT); // Set take profit level
+
+    profit = 0; // Initialize profit variable
+
+    return(INIT_SUCCEEDED);
+}
+
+// Execute trading logic
+void OnTick()
+{
+    // Calculate trading volume based on the size of the deposit and earned profit
+    double volume = trade.AccountInfoDouble(ACCOUNT_BALANCE) * (1 + profit) / 10000;
+
+    // Open a buy trade if price breaks above a resistance level
+    if (iHigh(NULL, 0, 1) > iHigh(NULL, 0, 2))
+    {
+        trade.Buy(volume); // Execute buy trade
+        profit += trade.ResultProfit(); // Update earned profit
+    }
+
+    // Open a sell trade if price breaks below a support level
+    if (iLow(NULL, 0, 1) < iLow(NULL, 0, 2))
+    {
+        trade.Sell(volume); // Execute sell trade
+        profit += trade.ResultProfit(); // Update earned profit
+    }
+}
+
+// Reinvest earned profits for further trading
+void ReinvestProfits()
+{
+    // Calculate reinvestment volume based on the size of the deposit and earned profit
+    double reinvestVolume = trade.AccountInfoDouble(ACCOUNT_BALANCE) * (1 + profit) / 10000;
+    
+    // Increase trading volume for future trades
+    trade.SetExpertVolume(reinvestVolume);
+}
+
+// Stop trading when necessary
+void OnDeinit(const int reason)
+{
+    // Stop trading
+    trade.CloseAll();
+
+    // Print final profit
+    Print('Total earned profit: ', profit);
+}
